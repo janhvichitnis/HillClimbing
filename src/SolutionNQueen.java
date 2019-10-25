@@ -2,11 +2,11 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class SolutionNQueen {
-    private static int n = 0, variation = 0, currentStateHeuristic, heuristic;
-    private static boolean breakloop = false, runAgain = false;
-    static double percent = 0.0, failure = 0.0;
+    private static int n = 0, count = 0, variation = 0, currentStateHeuristic, heuristic;
+    private static boolean breakloop = false;
+    static float percent = 0.0f, failure = 0.0f;
     private static int stepsToSolution = 0, avgSuccessSteps = 0, avgFailureSteps = 0;
-    private static int avgrandomStart = 0, TotalavgrandomStart = 0;
+    private static int avgrandomStart = 0, TotalavgrandomStart = 0,randomStartcount=0;
 
     public static void main(String[] args) {
         int failed = 0, success = 0;
@@ -29,7 +29,8 @@ public class SolutionNQueen {
                     System.out.println("Please enter valid option");
             }
         }
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 500; i++) {
+            count++;
             stepsToSolution = 0;
             avgrandomStart = 0;
             QueenState[] currentState = generateBoard();
@@ -37,43 +38,46 @@ public class SolutionNQueen {
             //printState(currentState);
             currentStateHeuristic = findHeuristic(currentState);
             if (variation == 2) {
-                for (int l = 0; l < 100; l++) {
-                    while (currentStateHeuristic != 0) {
-                        neighbourState = nextBoard(neighbourState);
-                        //if (runAgain == true) {
-                        // runAgain = false;
-                        // l = 0;
-                        //}
-                        if (breakloop == true) {
-                            breakloop = false;
-
-                            break;
-                        } else {
-                            currentStateHeuristic = heuristic;
-                        }
-                        stepsToSolution++;
-                    }
-                    if (currentStateHeuristic == 0) {
-                        break;
-
-                    }
-
-                    System.out.println("moved " + l + "Queen");
-                    currentState = moveOneQueenRandom(neighbourState);
-                    heuristic = findHeuristic(currentState);
-                }
+                iterateLoop(neighbourState, currentState);
                 if (currentStateHeuristic != 0) {
-                    System.out.println("solution not found");
                     stepsToSolution++;
-                    System.out.println("Steps Needed : " + stepsToSolution);
-
                     failed++;
                     avgFailureSteps = avgFailureSteps + stepsToSolution;
-                    System.out.println("Total Steps Needed : " + avgFailureSteps);
                     breakloop = false;
+                    if (count <= 4) {
+                        System.out.println("\nsolution not found");
+                        printState(currentState);
+                        System.out.println("Steps Needed : " + stepsToSolution);
+                    }
+
                 }
 
-            }else {
+            } else if (variation == 4) {
+                iterateLoop(neighbourState, currentState);
+                if (currentStateHeuristic != 0) {
+
+                    neighbourState = generateBoard();
+                    avgrandomStart++;
+                    heuristic = findHeuristic(neighbourState);
+                    TotalavgrandomStart = avgrandomStart + TotalavgrandomStart;
+                    iterateLoop(neighbourState, currentState);
+                    avgrandomStart = 0;
+                    randomStartcount++;
+                    if (currentStateHeuristic != 0) {
+                        stepsToSolution++;
+                        failed++;
+                        avgFailureSteps = avgFailureSteps + stepsToSolution;
+                        breakloop = false;
+                        if (count <= 4) {
+                            System.out.println("\nsolution not found");
+                            printState(currentState);
+                            System.out.println("Steps Needed : " + stepsToSolution);
+                        }
+                    }
+
+                }
+
+            } else {
                 while (currentStateHeuristic != 0) {
                     //  Get the next board
                     neighbourState = nextBoard(neighbourState);
@@ -81,15 +85,17 @@ public class SolutionNQueen {
                     if (breakloop == true) {
 
                         if (variation == 1) {
-
-                            System.out.println("solution not found");
                             stepsToSolution++;
-                            System.out.println("Steps Needed : " + stepsToSolution);
-
                             failed++;
                             avgFailureSteps = avgFailureSteps + stepsToSolution;
-                            System.out.println("Total Steps Needed : " + avgFailureSteps);
                             breakloop = false;
+                            if (count <= 4) {
+
+                                System.out.println("\nsolution not found");
+                                printState(currentState);
+
+                                System.out.println("Steps Needed : " + stepsToSolution);
+                            }
                             break;
                         }
 
@@ -101,22 +107,25 @@ public class SolutionNQueen {
                 }
             }
             if (currentStateHeuristic == 0) {
-                System.out.println("Solution Found :");
-                System.out.println("Steps Needed : " + stepsToSolution);
-
                 avgSuccessSteps = avgSuccessSteps + stepsToSolution;
-                System.out.println("Total Steps Needed : " + avgSuccessSteps);
                 success++;
+                if (count <= 4) {
+                    System.out.println("\nSolution Found :");
+                    printState(currentState);
+                    System.out.println("Steps Needed : " + stepsToSolution);
+                }
             }
-            printState(neighbourState);
         }
         try {
             percent = (success * 100) / (success + failed);
             failure = (failed * 100) / (success + failed);
-            System.out.println("Total Percentage of Success = " + percent + "%");
+            System.out.println("\n\nTotal Percentage of Success = " + percent + "%");
             System.out.println("Total Percentage of failure = " + failure + "%");
             if (variation == 3) {
                 System.out.println("Average no of randomStarts" + TotalavgrandomStart / 100);
+                System.out.println("Average no of steps for success results = " + avgSuccessSteps / success);
+            } else if (variation == 4) {
+                System.out.println("Average no of randomStarts" + TotalavgrandomStart);
                 System.out.println("Average no of steps for success results = " + avgSuccessSteps / success);
             } else {
                 System.out.println("Average no of steps for success results = " + avgSuccessSteps / success);
@@ -126,6 +135,26 @@ public class SolutionNQueen {
 
         }
 
+    }
+
+    public static void iterateLoop(QueenState[] neighbourState, QueenState[] currentState) {
+        for (int l = 0; l < 100; l++) {
+            while (currentStateHeuristic != 0) {
+                neighbourState = nextBoard(neighbourState);
+                if (breakloop == true) {
+                    breakloop = false;
+                    break;
+                } else {
+                    currentStateHeuristic = heuristic;
+                }
+                stepsToSolution++;
+            }
+            if (currentStateHeuristic == 0) {
+                break;
+            }
+            currentState = moveOneQueenRandom(neighbourState);
+            heuristic = findHeuristic(currentState);
+        }
     }
 
     public static QueenState[] generateBoard() {
@@ -194,26 +223,31 @@ public class SolutionNQueen {
             neighbourState = tmpState;
             heuristic = bestHeuristic;
         } else */
-        printState(neighbourState);
+
         if (heuristic != 0) {
-            System.out.println("Heuristic = " + heuristic);
-            int count = stepsToSolution + 1;
-            System.out.println("Step" + count);
+            int count1 = stepsToSolution + 1;
+            if (count <= 4) {
+                //printState(neighbourState);
+                // System.out.println("Heuristic = " + heuristic);
+                //System.out.println("Step" + count1);
+            }
         } else {
-            int count = stepsToSolution + 1;
-            System.out.println("Step" + count);
+
+            int count1 = stepsToSolution + 1;
+            if (count <= 4) {
+                // printState(neighbourState);
+                //System.out.println("Step" + count1);
+            }
         }
         if (bestHeuristic == currentStateHeuristic) {
 
             neighbourState = tmpState;
             heuristic = bestHeuristic;
             if (variation == 3) {
-                System.out.println("Random Start");
                 neighbourState = generateBoard();
                 avgrandomStart++;
                 heuristic = findHeuristic(neighbourState);
                 TotalavgrandomStart = avgrandomStart + TotalavgrandomStart;
-
             } else {
                 breakloop = true;
             }
@@ -238,7 +272,7 @@ public class SolutionNQueen {
     }
 
     public static QueenState[] moveOneQueenRandom(QueenState[] currentState) {
-        System.out.println("in move");
+        //System.out.println("in move");
         Random rndm = new Random();
         int tempn = currentState.length;
         int col = rndm.nextInt(tempn);
